@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  USER
+  GUEST
+}
+
+enum SectionType {
+  CT
+  XRAY
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(USER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions  Session[]
+  comments  Comment[]
+  todos     Todo[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id         String      @id @default(cuid())
+  name       String
+  slug       String
+  parentId   String?
+  parent     Category?   @relation("CategoryChildren", fields: [parentId], references: [id])
+  children   Category[]  @relation("CategoryChildren")
+  section    SectionType
+  isLocked   Boolean     @default(false)
+  order      Int         @default(0)
+  createdAt  DateTime    @default(now())
+
+  pathologies Pathology[]
+}
+
+model Pathology {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  contentJson Json?
+  contentText String   @default("")
+  textColor   String?
+  emoji       String?
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  searchVector Unsupported("tsvector")?
+  media       Media[]
+  protocols   Protocol[]
+  comments    Comment[]
+  todos       Todo[]
+
+  @@index([searchVector], type: Gin)
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+model Media {
+  id           String    @id @default(cuid())
+  pathologyId  String?
+  pathology    Pathology? @relation(fields: [pathologyId], references: [id], onDelete: Cascade)
+  protocolId   String?
+  protocol     Protocol?  @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  type         MediaType
+  mimeType     String
+  originalName String
+  filename     String
+  size         Int
+  width        Int?
+  height       Int?
+  durationSec  Float?
+  previewSmall String?
+  previewLarge String?
+  poster       String?
+  createdAt    DateTime  @default(now())
+}
+
+model Protocol {
+  id          String    @id @default(cuid())
+  title       String
+  contentJson Json?
+  contentText String   @default("")
+  pathologyId String?
+  pathology   Pathology? @relation(fields: [pathologyId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  searchVector Unsupported("tsvector")?
+  todos       Todo[]
+  media       Media[]
+
+  @@index([searchVector], type: Gin)
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  text        String
+  pathologyId String
+  pathology   Pathology @relation(fields: [pathologyId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  parentId    String?
+  parent      Comment?  @relation("CommentChildren", fields: [parentId], references: [id])
+  replies     Comment[] @relation("CommentChildren")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  searchVector Unsupported("tsvector")?
+
+  @@index([searchVector], type: Gin)
+}
+
+model Todo {
+  id          String    @id @default(cuid())
+  text        String
+  isDone      Boolean   @default(false)
+  dueAt       DateTime?
+  pathologyId String
+  pathology   Pathology @relation(fields: [pathologyId], references: [id], onDelete: Cascade)
+  protocolId  String?
+  protocol    Protocol? @relation(fields: [protocolId], references: [id])
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SeedState {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

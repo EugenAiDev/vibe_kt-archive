@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: kt_user
+      POSTGRES_PASSWORD: kt_password
+      POSTGRES_DB: kt_archive
+    ports:
+      - "${DB_PORT:-5433}:5432"
+    volumes:
+      - kt_archive_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U kt_user -d kt_archive"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+volumes:
+  kt_archive_db:

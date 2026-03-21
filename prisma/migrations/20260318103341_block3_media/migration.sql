@@ -1,0 +1,13 @@
+-- AlterTable
+ALTER TABLE "Media" ADD COLUMN "protocolId" TEXT;
+ALTER TABLE "Media" ALTER COLUMN "pathologyId" DROP NOT NULL;
+ALTER TABLE "Media" ADD COLUMN "mimeType" TEXT NOT NULL DEFAULT '';
+ALTER TABLE "Media" ADD COLUMN "width" INTEGER;
+ALTER TABLE "Media" ADD COLUMN "height" INTEGER;
+ALTER TABLE "Media" ADD COLUMN "durationSec" DOUBLE PRECISION;
+ALTER TABLE "Media" ADD COLUMN "previewSmall" TEXT;
+ALTER TABLE "Media" ADD COLUMN "previewLarge" TEXT;
+ALTER TABLE "Media" ADD COLUMN "poster" TEXT;
+
+-- AddForeignKey
+ALTER TABLE "Media" ADD CONSTRAINT "Media_protocolId_fkey" FOREIGN KEY ("protocolId") REFERENCES "Protocol"("id") ON DELETE CASCADE ON UPDATE CASCADE;

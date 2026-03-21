@@ -1,0 +1,26 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    volumes:
+      - kt_archive_uploads:/app/uploads
+    command: >
+      sh -c "npx prisma migrate deploy &&
+      npx prisma db seed &&
+      node server.js"
+
+volumes:
+  kt_archive_uploads:
